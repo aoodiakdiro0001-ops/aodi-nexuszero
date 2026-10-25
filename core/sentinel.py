@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 RULES = [
-    ("NZ-X01", re.compile(r"(AKIA[0-9A-Z]{16}|(?i)api[_-]?key\s*=\s*[\"'][^\"']{12,})", re.I),
+    ("NZ-X01", re.compile(r"(AKIA[0-9A-Z]{16}|(?i:api[_-]?key\s*=\s*[\"'][^\"']{12,}))"),
      "high", "hardcoded cloud credential / API key literal"),
     ("NZ-X02", re.compile(r"(?<![\w.])(eval|exec)\s*\(", re.I),
      "high", "dynamic code execution (eval/exec)"),
