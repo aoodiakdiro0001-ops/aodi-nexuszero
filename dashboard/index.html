@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aodı-NexusZero — لوحة الخلية السيادية</title>
+<style>
+:root{--bg:#0a0c10;--card:#12161d;--line:#232a35;--txt:#e8eaed;--sub:#8d97a6;
+--ok:#22c55e;--warn:#f0b429;--bad:#ef4444;--acc:#38bdf8;--acc2:#a78bfa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI",Tahoma,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px}h1 span{color:var(--acc)}
+main{max-width:1080px;margin:0 auto;padding:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{font-size:12px;color:var(--sub);margin-bottom:8px;font-weight:600}
+.v{font-size:20px;font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+textarea,input{background:#0e1117;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 12px;font-size:13px;width:100%}
+textarea{min-height:70px;resize:vertical}
+button{background:var(--acc);color:#04121c;border:0;padding:9px 16px;border-radius:9px;font-weight:700;cursor:pointer;font-size:13px}
+.btn2{background:#283042;color:var(--txt)}
+.pill{display:inline-block;font-size:11px;border-radius:99px;padding:3px 10px;border:1px solid var(--line);margin:2px}
+.pill.gpu{color:var(--acc2)}.pill.lite{color:var(--ok)}
+.node{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;background:var(--card);font-size:13px}
+.up{color:var(--ok)}.down{color:var(--bad)}
+.task{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;background:var(--card);font-size:13px}
+.shard{font-size:12px;color:var(--sub)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+pre{white-space:pre-wrap;word-break:break-word;font-size:12px;background:#0d1016;border-radius:8px;padding:10px;margin-top:6px}
+footer{color:var(--sub);font-size:12px;text-align:center;padding:18px}
+a{color:var(--acc);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Aodı-<span>NexusZero</span> — لوحة الخلية السيادية</h1>
+  <div id="ver" style="color:var(--sub);font-size:12px"></div>
+</header>
+<main>
+  <div class="grid">
+    <div class="card"><h3>عقد حيّة</h3><div class="v" id="fleet">–</div></div>
+    <div class="card"><h3>مهام مكتملة</h3><div class="v" id="done">–</div></div>
+    <div class="card"><h3>نتائج الحارس</h3><div class="v" id="find">–</div></div>
+    <div class="card"><h3>سلسلة الختم</h3><div class="v" id="chain">–</div></div>
+  </div>
+
+  <div class="card">
+    <h3>هدف جديد (يتوزّع تلقائياً على الخلية)</h3>
+    <textarea id="goal" placeholder="مثال: صمّم دالة تقييم تعبيرات ثم وَلِّد اختبارات تأكدية"></textarea>
+    <div class="row">
+      <button onclick="run()">توزيع على الخلية</button>
+      <button class="btn2" onclick="load()">تحديث</button>
+      <button class="btn2" onclick="scan()">فحص الحارس على المشروع</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>طوبولوجيا الخلية (atlas heartbeat)</h3>
+    <div id="nodes">—</div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>المهام — الشظايا الموزعة</h3>
+    <div id="tasks">—</div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>أحداث مباشرة</h3>
+    <div id="events" class="shard">—</div>
+  </div>
+</main>
+<footer>Aodı-NexusZero v1.0.0 · MIT © 2026 Baran Avisat · <a href="mailto:baranavisat@gmail.com">baranavisat@gmail.com</a> · <a href="https://wa.me/905313263722">WhatsApp +90 531 326 37 22</a></footer>
+<script>
+const API = location.origin;
+const esc = (s) => { const d = document.createElement("div"); d.textContent = String(s || ""); return d.innerHTML; };
+async function j(u, b) {
+  return fetch(u, b ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) } : undefined).then(r => r.json());
+}
+async function load() {
+  try {
+    const st = await j(API + "/api/state");
+    document.getElementById("ver").textContent = st.brand + " v" + st.version;
+    const nodes = st.nodes || [];
+    const up = nodes.filter(n => n.up);
+    document.getElementById("fleet").textContent = up.length + " / " + nodes.length;
+    document.getElementById("nodes").innerHTML = nodes.map(n => `
+      <div class="node">
+        <span class="pill ${(n.tags || [])[0] || ""}">${(n.tags || []).join("·")}</span>
+        <b>${esc(n.name)}</b>
+        <span class="${n.up ? "up" : "down"}">${n.up ? "● UP" : "○ DOWN"}</span>
+        <div class="shard">load=${(n.load ?? 0).toFixed ? (n.load ?? 0).toFixed(2) : "0"} · lat=${n.latency_ms ?? "-"}ms · batt=${n.battery ? n.battery + "%" : "وعي الطاقة غير متاح"} · ${esc(n.source || "")}</div>
+      </div>`).join("");
+    const t = (await j(API + "/api/tasks")).tasks || [];
+    document.getElementById("done").textContent = t.filter(x => x.status && x.status.startsWith("done")).length;
+    document.getElementById("tasks").innerHTML = t.slice(0, 10).map(x => `
+      <div class="task">
+        <b>${esc((x.goal || "").slice(0, 76))}</b>
+        <div class="shard">${x.status === "done" ? '<span class="ok">✓ نظيف</span>' : x.status === "failed" ? '<span class="bad">✗ فشل</span>' : '<span class="warn">⏳ جارٍ</span>'}
+        · شظايا ${x.shards ? x.shards.filter(s => s.status === "done").length + "/" + x.shards.length : "0"} ${x.seal ? "· ختم #" + x.seal.idx : ""}</div>
+        ${(x.shards || []).map(s => `<div class="shard">${s.status === "done" ? "✓" : "✗"} ${s.idx}:${esc(s.kind)} → ${esc(s.node || "-")} ${s.ms ? "· " + s.ms + "ms" : ""} ${s.error ? "· " + esc(s.error.slice(0, 60)) : ""}</div>`).join("")}
+      </div>`).join("");
+    const f = (await j(API + "/api/findings")).findings || [];
+    document.getElementById("find").textContent = f.length;
+    const c = await j(API + "/api/chain");
+    document.getElementById("chain").textContent = c.verify && c.verify.ok ? `${c.verify.size} ✓` : "تداخل!";
+    const ev = (await j(API + "/api/events")).events || [];
+    document.getElementById("events").innerHTML = ev.slice(0, 6).map(e =>
+      `<div>${esc(e.level)} · ${esc(e.message.slice(0, 90))}</div>`).join("");
+  } catch (e) { /* keep last state */ }
+}
+async function run() {
+  const g = document.getElementById("goal").value.trim();
+  if (!g) return alert("اكتب الهدف");
+  document.getElementById("goal").value = "";
+  await j(API + "/api/task", { goal: g });
+  load();
+}
+async function scan() { await j(API + "/api/scan", { path: ".." }); load(); }
+load(); setInterval(load, 4000);
+</script>
+</body>
+</html>
